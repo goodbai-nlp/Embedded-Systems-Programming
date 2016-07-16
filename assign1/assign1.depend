@@ -1,0 +1,18 @@
+# depslib dependency file v1.0
+1468542720 source:/home/jackbai/mywork/HIT_Summer2016/assign1/main.cpp
+	<cstdlib>
+	<ctime>
+	"myqueue.h"
+	<pthread.h>
+	<cstring>
+	<sys/resource.h>
+	<cstdio>
+	<unistd.h>
+	<iostream>
+
+1468495916 /home/jackbai/mywork/HIT_Summer2016/assign1/myqueue.h
+	<cstdlib>
+	<ctime>
+	<cstdio>
+	<pthread.h>
+
