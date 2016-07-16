@@ -10,8 +10,9 @@ SROOT = /usr/src/linux-headers-4.4.0-28-generic
 APP = gmem_tester
 obj-m:= Mydriver.o
 all:
-	# $(CC) -o $(obj-m) Mydriver.c -lpthread -lboost_thread
 	make ARCH=x86 CROSS_COMPILE=$(CROSS_COMPILE) -C $(SROOT) M=$(PWD) modules
+	gcc -o main main.c -lpthread
+	gcc -o test test.c
 clean:
 	rm -f *.ko
 	rm -f *.o

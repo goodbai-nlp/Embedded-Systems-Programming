@@ -126,8 +126,8 @@ ssize_t gmem_driver_read(struct file *file, MSG *buf,size_t count,loff_t *ppos){
 	 * If we're at the end of the message, 
 	 * return 0 signifying end of file 
 	 */
-	mutex_lock(&(gm->lck));
 	MSG *mm =(MSG*)kmalloc(sizeof(MSG),GFP_KERNEL);
+	mutex_lock(&(gm->lck));
 	if(gm->qfront == gm->qrear){
         printk("queue is empty!\n");
         mutex_unlock(&(gm->lck));

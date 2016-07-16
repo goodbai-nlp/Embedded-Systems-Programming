@@ -63,21 +63,23 @@ int main(int argc, char **argv)
 			// if(write(fd, &mm, 1)){
 			// 	printf("write succeed!\n");		
 			// }
-			// //MSG *m = (MSG *)malloc(sizeof(MSG));
-			MSG m2;
-			if(read(fd,&m2,1)){
-				//sleep(1);
-				printf("seqnum %d sender: %d destination %d\n",m2.seqnum,m2.source,m2.destination);
-				printf("%s\n",m2.str);
+			MSG *m = (MSG *)malloc(sizeof(MSG));
+			if(read(fd,m,1)){
+				printf("seqnum %d sender: %d destination %d\n",(*m).seqnum,(*m).source,(*m).destination);
+				printf("%s\n",(*m).str);
 				return 0;
 			}
 			printf("show failed\n");
 		}else if(strcmp("write", argv[1]) == 0){
 			int len = 10+random(70);
-			MSG mm = {1,1,random(3)+1,""};
+			MSG mm;
+			MSG *m = (MSG *)malloc(sizeof(MSG));
+			(*m).seqnum = 1;
+			(*m).source = 1;
+			(*m).destination =1;
 	        //char * str = (char *)malloc(sizeof(char)*len);
-	        enumstr(mm.str,len);
-			if(write(fd, &mm, 1)){
+	        enumstr((*m).str,len);
+			if(write(fd,m,1)){
 				printf("write succeed!\n");		
 				return 0;
 			}
