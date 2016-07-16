@@ -10,7 +10,7 @@
 typedef struct msg{
     int seqnum;
     int source,destination;
-    char *str;
+    char str[85];
 }MSG;
 void enumstr(char *s,int len){
     for(int i=0;i<len;++i){
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 	int fd, res;
 	MSG buff[10];
 	int i = 0;
-
+	srand( (unsigned)time(NULL));
 	if(argc < 2){
 		printf("\nGmem_test: A helper program for the driver gmem\nPossible usage is gmem_test [option] <string>\n\n");
 		printf("Option\t\t\tDescription\n-----\t\t\t-----------\n");
@@ -49,31 +49,39 @@ int main(int argc, char **argv)
 	}
 
 	/* open devices */
-	fd = open("/dev/bus_in", O_RDWR);
+	fd = open("/dev/bus_out1", O_RDWR);
 	if (fd < 0 ){
 		printf("Can not open device file.\n");		
 		return 0;
 	}else{
 		if(strcmp("show", argv[1]) == 0){
-			MSG *m = (MSG *)malloc(sizeof(MSG));
-			res = read(fd,m);
-			if(res!=-1){
-				sleep(1);
-				printf("seqnum %d sender: %d destination %d\n",(*m).seqnum,(*m).source,(*m).destination);
-				printf("%d\n",strlen(*((*m).str)));
+			// int len = 10+random(70);
+			// MSG mm = {1,1,random(3)+1,""};
+	  //       //char * str = (char *)malloc(sizeof(char)*len);
+	  //       enumstr(mm.str,len);
+	  //       //MSG *mm = (MSG *)malloc(sizeof(MSG));
+			// if(write(fd, &mm, 1)){
+			// 	printf("write succeed!\n");		
+			// }
+			// //MSG *m = (MSG *)malloc(sizeof(MSG));
+			MSG m2;
+			if(read(fd,&m2,1)){
+				//sleep(1);
+				printf("seqnum %d sender: %d destination %d\n",m2.seqnum,m2.source,m2.destination);
+				printf("%s\n",m2.str);
+				return 0;
 			}
 			printf("show failed\n");
 		}else if(strcmp("write", argv[1]) == 0){
 			int len = 10+random(70);
-	        char * str = (char *)malloc(sizeof(char)*len);
-	        enumstr(str,len);
-	        MSG mm = {1,1,random(3)+1,&str};
-	        buff[0]=mm;
-			res = write(fd, buff, 1);
-			if(res){
+			MSG mm = {1,1,random(3)+1,""};
+	        //char * str = (char *)malloc(sizeof(char)*len);
+	        enumstr(mm.str,len);
+			if(write(fd, &mm, 1)){
 				printf("write succeed!\n");		
 				return 0;
-			}	
+			}
+			printf("full\n");
 		}
 		/* close devices */
 		close(fd);

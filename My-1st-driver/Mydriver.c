@@ -28,7 +28,7 @@
 
 typedef struct msg{
     int seqnum,source,destination;
-    char **str;
+    char str[85];
 }MSG;
 /* per device structure */
 struct gmem_dev {
@@ -57,7 +57,7 @@ static struct device *gmem_dev_device2;
 static struct device *gmem_dev_device3;
 static struct device *gmem_dev_device4;
 
-struct gmem_dev *gmem_devp1,*gmem_devp2,*gmem_devp3,*gmem_devp4;
+struct gmem_dev *gmem_devp1=NULL,*gmem_devp2=NULL,*gmem_devp3=NULL,*gmem_devp4=NULL;
 static char *user_name = "Dear JackBai";
 
 module_param(user_name,charp,0000);	//to get parameter from load.sh script to greet the user
@@ -69,10 +69,8 @@ int gmem_driver_open(struct inode *inode, struct file *file)
 {
 	struct gmem_dev *gmem_devp;
 //	printk("\nopening\n");
-
 	/* Get the per-device structure that contains this cdev */
 	gmem_devp = container_of(inode->i_cdev, struct gmem_dev, cdev);
-
 	/* Easy access to cmos_devp from rest of the entry points */
 	file->private_data = gmem_devp;
 	printk("\n%s is openning \n", gmem_devp->name);
@@ -100,55 +98,53 @@ ssize_t gmem_driver_write(struct file *file, MSG *buf,
 	//while (count) {	
 	if(!copy_from_user(&(gmem_devp->m), buf, sizeof(MSG))){  
     	printk("copy msg from user\n");
-    	printk("seqnum %d sender: %d destination %d %d\n",(gmem_devp->m).seqnum,(gmem_devp->m).source,(gmem_devp->m).destination,(gmem_devp->m).str);
+    	printk("seqnum %d sender: %d destination %d %s\n",(gmem_devp->m).seqnum,(gmem_devp->m).source,(gmem_devp->m).destination,(gmem_devp->m).str);
     	mutex_lock(&(gmem_devp)->lck);
     	tmp = (gmem_devp->qrear+1)%(QUEUELEN);
 	    if(gmem_devp->qfront == tmp){
 	        printk("queue is full\n");
 	        mutex_unlock(&(gmem_devp->lck));
-	        return -1;
+	        return 0;
 	    }
-	    gmem_devp->buff[gmem_devp->qrear] = gmem_devp->m;
-	    gmem_devp->qrear = (gmem_devp->qrear+1)%(QUEUELEN);
-	    mutex_unlock(&(gmem_devp->lck));
+	    else{
+		    gmem_devp->buff[gmem_devp->qrear] = gmem_devp->m;
+		    gmem_devp->qrear = (gmem_devp->qrear+1)%(QUEUELEN);
+		    mutex_unlock(&(gmem_devp->lck));
+		}
 		return 1;
     }
     printk("copy_from_user failed\n");
-	return -1;
+	return 0;
 }
 /*
  * Read to gmem driver
  */
 ssize_t gmem_driver_read(struct file *file, MSG *buf,size_t count,loff_t *ppos){
-	printk("=========================\n");
-	int bytes_read = 0;
 	struct gmem_dev *gm = file->private_data;
-	MSG *mm =(MSG*)kmalloc(sizeof(MSG),GFP_KERNEL);
 	// (*mm)->str=NULL;
 	/*
 	 * If we're at the end of the message, 
 	 * return 0 signifying end of file 
 	 */
 	mutex_lock(&(gm->lck));
+	MSG *mm =(MSG*)kmalloc(sizeof(MSG),GFP_KERNEL);
 	if(gm->qfront == gm->qrear){
         printk("queue is empty!\n");
         mutex_unlock(&(gm->lck));
-        return -1;
+        return 0;
     }
     *mm = gm->buff[gm->qfront];
-    printk("top element address %d\n",(gm->buff[gm->qfront]).str);
+    //printk("top element address %d\n",(gm->buff[gm->qfront]).str);
     gm->qfront = (gm->qfront +1)%(QUEUELEN);
-    if(!copy_to_user(buf,mm,24)){
-    	printk("%d\n",sizeof(*mm));
-    	printk("%d->%d:\n",buf,mm);
+    if(!copy_to_user(buf,mm,sizeof(MSG))){
 		printk("copy to user\n");
-		printk("copy: seqnum %d sender: %d destination %d %d\n",(*buf).seqnum,(*buf).source,(*buf).destination,(*buf).str);
+		printk("copy: seqnum %d sender: %d destination %d\n",(*buf).seqnum,(*buf).source,(*buf).destination);
 		mutex_unlock(&(gm->lck));
 		return 1;
 	}
 	mutex_unlock(&(gm->lck));
 	printk("copy failed\n");
-	return -1;
+	return 0;
 }
 
 /* File operations structure. Defined in linux/fs.h */
@@ -229,9 +225,6 @@ int __init gmem_driver_init(void)
 	gmem_dev_device3 = device_create(gmem_dev_class3, NULL, MKDEV(MAJOR(gmem_dev_number3), 0), NULL, DEVICE_NAME3);		
 	gmem_dev_device4 = device_create(gmem_dev_class4, NULL, MKDEV(MAJOR(gmem_dev_number4), 0), NULL, DEVICE_NAME4);		
 
-
-
-
 	// device_create_file(gmem_dev_device, &dev_attr_xxx);
 
 	// memset(gmem_devp->in_string, 0, 256);
@@ -287,6 +280,7 @@ void __exit gmem_driver_exit(void)
 	class_destroy(gmem_dev_class3);
 	class_destroy(gmem_dev_class4);
 	printk("gmem driver removed.\n");
+
 }
 
 module_init(gmem_driver_init);
